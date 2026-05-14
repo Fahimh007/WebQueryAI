@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block start %}
+<form method="post">
+    {% csrf_token %}
+    <div class="url-row">
+        <label for="urlInput">> Website URL:</label>
+        <input type="url" class="url-input" id="urlInput" name="urlInput" placeholder="https://example.com" required />
+        <br><br>
+        <label for="userQuery">> Your Question:</label>
+        <input type="text" class="url-input" id="userQuery" name="userQuery" placeholder="Ask a question about the website..." required />
+        <button type="submit" class="btn btn-primary" id="indexBtn">
+          ⚡ Get Answer
+        </button>
+    </div>
+</form>
+{% if answer %}
+    <div class="answer">
+        <h2>Answer:</h2>
+        <p>{{ answer }}</p>
+    </div>
+{% endif %}
+{% if error %}
+    <div class="error">
+        <h2>Error:</h2>
+        <p>{{ error }}</p>
+    </div>
+{% endif %}
+{% endblock %}
