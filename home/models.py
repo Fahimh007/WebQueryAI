@@ -1,7 +1,6 @@
 from django.db import models
 
 # Create your models here.
-
 class IndexedSite(models.Model):
     """Tracks websites that have been scraped and indexed into the vector store."""
     url = models.URLField(unique=True)
