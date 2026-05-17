@@ -1,142 +1,165 @@
-import os
-from dataclasses import dataclass
-from pathlib import Path
+# rag_app/rag.py
 
+import os
 from dotenv import load_dotenv
 
-ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
-
-load_dotenv(ENV_PATH)
-os.environ.setdefault("USER_AGENT", os.getenv("USER_AGENT", "WebRAG/1.0"))
-
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.document_loaders import WebBaseLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.vectorstores import InMemoryVectorStore
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.chains import RetrievalQA
 
 
-@dataclass(frozen=True)
-class OpenRouterConfig:
-    api_key: str
-    base_url: str
-    chat_model: str
-    embedding_model: str
+# =========================================================
+# LOAD ENV VARIABLES
+# =========================================================
+
+load_dotenv()
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+if not GOOGLE_API_KEY:
+    raise ValueError("GOOGLE_API_KEY not found in .env file")
 
 
-def _load_openrouter_config():
-    load_dotenv(ENV_PATH, override=False)
+# =========================================================
+# EMBEDDING MODEL
+# =========================================================
 
-    api_key = (os.getenv("OPENROUTER_API_KEY") or "").strip()
-    base_url = (os.getenv("OPENROUTER_BASE_URL") or "").strip()
-    chat_model = (os.getenv("OPENROUTER_MODEL") or os.getenv("MODEL_NAME") or "").strip()
-    embedding_model = (os.getenv("OPENROUTER_EMBEDDING_MODEL") or "").strip()
-
-    missing_vars = []
-    if not api_key:
-        missing_vars.append("OPENROUTER_API_KEY")
-    if not base_url:
-        missing_vars.append("OPENROUTER_BASE_URL")
-    if not chat_model:
-        missing_vars.append("OPENROUTER_MODEL")
-    if not embedding_model:
-        missing_vars.append("OPENROUTER_EMBEDDING_MODEL")
-
-    if missing_vars:
-        message = (
-            "Missing OpenRouter configuration in webinfo/.env: "
-            + ", ".join(missing_vars)
-            + "."
-        )
-        if "OPENROUTER_MODEL" in missing_vars:
-            message += " You can temporarily set MODEL_NAME as a fallback for OPENROUTER_MODEL."
-        raise ValueError(message)
-
-    return OpenRouterConfig(
-        api_key=api_key,
-        base_url=base_url,
-        chat_model=chat_model,
-        embedding_model=embedding_model,
-    )
+embedding_model = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
 
-def _create_embeddings(config):
-    return OpenAIEmbeddings(
-        model=config.embedding_model,
-        api_key=config.api_key,
-        base_url=config.base_url,
-    )
+# =========================================================
+# LOAD WEBSITE DATA
+# =========================================================
 
-
-def _create_llm(config):
-    return ChatOpenAI(
-        model=config.chat_model,
-        api_key=config.api_key,
-        base_url=config.base_url,
-        temperature=0,
-    )
-
-
-def _create_retriever(documents, embeddings):
-    vectorstore = InMemoryVectorStore(embeddings)
-    vectorstore.add_documents(documents)
-    return vectorstore.as_retriever(search_kwargs={"k": 4})
-
-# step 1: get url and load data
-def get_rag_answer(url, query):
+def load_website(url):
     """
-    Load the website, process it, and answer the query.
+    Load website content from URL
     """
-    config = _load_openrouter_config()
 
-    print(f"Loading documents from {url}...")
+    loader = WebBaseLoader(url)
 
-    loader = WebBaseLoader([url])
-    docs = loader.load()
+    documents = loader.load()
 
-    # step 2: split documents into chunks
-    print("Splitting documents...")
+    return documents
 
-    text_splitter = RecursiveCharacterTextSplitter(
+
+# =========================================================
+# SPLIT DOCUMENTS
+# =========================================================
+
+def split_documents(documents):
+    """
+    Split large text into smaller chunks
+    """
+
+    splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200
     )
 
-    splits = text_splitter.split_documents(docs)
-    # step 3: create embeddings and vector store
-    print("Creating embeddings...")
+    chunks = splitter.split_documents(documents)
 
-    embeddings = _create_embeddings(config)
-    # step 4: create retriever and RAG chain
-    print("Creating retriever...")
+    return chunks
 
-    retriever = _create_retriever(splits, embeddings)
 
-    print("Creating LLM...")
+# =========================================================
+# CREATE VECTOR STORE
+# =========================================================
 
-    # step 5: create LLM and RAG chain
-    llm = _create_llm(config)
+def create_vector_store(chunks):
+    """
+    Create FAISS vector database
+    """
 
-    #step 6: building RAG chain and invoking query
-    print("Building RAG chain...")
-
-    template = """Answer the question based only on the following 
-                    context: {context}
-                    Question: {question}"""
-    
-    prompt = ChatPromptTemplate.from_template(template)
-
-    chain = (
-        {"context": retriever, "question": RunnablePassthrough()}
-        | prompt
-        | llm
-        | StrOutputParser()
+    vector_store = FAISS.from_documents(
+        chunks,
+        embedding_model
     )
 
-    print("Invoking query...")
+    return vector_store
 
-    response = chain.invoke(query)
 
-    return response
+# =========================================================
+# CREATE LLM
+# =========================================================
+
+def create_llm():
+    """
+    Create Gemini LLM
+    """
+
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-1.5-flash",
+        google_api_key=GOOGLE_API_KEY,
+        temperature=0.3
+    )
+
+    return llm
+
+
+# =========================================================
+# BUILD RAG CHAIN
+# =========================================================
+
+def build_rag_chain(vector_store):
+    """
+    Build RetrievalQA chain
+    """
+
+    llm = create_llm()
+
+    retriever = vector_store.as_retriever(
+        search_type="similarity",
+        search_kwargs={"k": 4}
+    )
+
+    qa_chain = RetrievalQA.from_chain_type(
+        llm=llm,
+        retriever=retriever,
+        chain_type="stuff",
+        return_source_documents=True
+    )
+
+    return qa_chain
+
+
+# =========================================================
+# MAIN RAG FUNCTION
+# =========================================================
+
+def ask_website(url, question):
+    """
+    Full RAG pipeline:
+    1. Load website
+    2. Split text
+    3. Create embeddings
+    4. Store vectors
+    5. Ask question
+    """
+
+    # Load website
+    documents = load_website(url)
+
+    # Split documents
+    chunks = split_documents(documents)
+
+    # Create vector DB
+    vector_store = create_vector_store(chunks)
+
+    # Build QA chain
+    qa_chain = build_rag_chain(vector_store)
+
+    # Ask question
+    result = qa_chain.invoke({
+        "query": question
+    })
+
+    return {
+        "answer": result["result"],
+        "sources": result["source_documents"]
+    }

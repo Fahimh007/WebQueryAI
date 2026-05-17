@@ -1,16 +1,30 @@
 from django.shortcuts import render
-from .rag_service import get_rag_answer
+from .rag_service import ask_website
 
 def home(request):
-    if request.method == 'POST':
-        url = request.POST.get('urlInput')
-        query = request.POST.get('userQuery')
-        if url and query:
-            try:
-                answer = get_rag_answer(url, query)
-                return render(request, 'index.html', {'answer': answer})
-            except Exception as e:
-                return render(request, 'index.html', {'error': str(e)})
-    return render(request, 'index.html', context={})
+
+    context = {}
+
+    if request.method == "POST":
+
+        url = request.POST.get("urlInput")
+        query = request.POST.get("userQuery")
+
+        if not url or not query:
+            context["error"] = "URL and query are required."
+            return render(request, "index.html", context)
+
+        try:
+            result = ask_website(url, query)
+
+            context["answer"] = result["answer"]
+            context["sources"] = result["sources"]
+            context["url"] = url
+            context["query"] = query
+
+        except Exception as e:
+            context["error"] = str(e)
+
+    return render(request, "index.html", context)
 
 

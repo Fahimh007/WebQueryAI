@@ -1,28 +1,100 @@
 {% extends "base.html" %}
+
 {% block start %}
-<form method="post">
-    {% csrf_token %}
-    <div class="url-row">
-        <label for="urlInput">> Website URL:</label>
-        <input type="url" class="url-input" id="urlInput" name="urlInput" placeholder="https://example.com" required />
-        <br><br>
-        <label for="userQuery">> Your Question:</label>
-        <input type="text" class="url-input" id="userQuery" name="userQuery" placeholder="Ask a question about the website..." required />
-        <button type="submit" class="btn btn-primary" id="indexBtn">
-          ⚡ Get Answer
-        </button>
-    </div>
-</form>
-{% if answer %}
-    <div class="answer">
-        <h2>Answer:</h2>
-        <p>{{ answer }}</p>
-    </div>
-{% endif %}
-{% if error %}
-    <div class="error">
-        <h2>Error:</h2>
-        <p>{{ error }}</p>
-    </div>
-{% endif %}
+
+<div class="container">
+
+    <h1>🌐 Website RAG Assistant</h1>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="url-row">
+
+            <label for="urlInput">
+                > Website URL:
+            </label>
+
+            <input
+                type="url"
+                class="url-input"
+                id="urlInput"
+                name="urlInput"
+                placeholder="https://example.com"
+                value="{{ url|default:'' }}"
+                required
+            />
+
+            <br><br>
+
+            <label for="userQuery">
+                > Your Question:
+            </label>
+
+            <input
+                type="text"
+                class="url-input"
+                id="userQuery"
+                name="userQuery"
+                placeholder="Ask a question about the website..."
+                value="{{ query|default:'' }}"
+                required
+            />
+
+            <br><br>
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+                id="indexBtn"
+            >
+                ⚡ Get Answer
+            </button>
+
+        </div>
+
+    </form>
+
+
+    {% if answer %}
+        <div class="answer">
+
+            <h2>Answer:</h2>
+
+            <p>{{ answer }}</p>
+
+        </div>
+    {% endif %}
+
+
+    {% if sources %}
+        <div class="sources">
+
+            <h3>Sources:</h3>
+
+            <ul>
+                {% for source in sources %}
+                    <li>
+                        {{ source.page_content|truncatechars:250 }}
+                    </li>
+                {% endfor %}
+            </ul>
+
+        </div>
+    {% endif %}
+
+
+    {% if error %}
+        <div class="error">
+
+            <h2>Error:</h2>
+
+            <p>{{ error }}</p>
+
+        </div>
+    {% endif %}
+
+</div>
+
 {% endblock %}
