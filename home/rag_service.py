@@ -4,12 +4,11 @@ import os
 from dotenv import load_dotenv
 
 from langchain_community.document_loaders import WebBaseLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.chains import RetrievalQA
-
+from langchain_classic.chains import RetrievalQA
 
 # =========================================================
 # LOAD ENV VARIABLES
@@ -94,7 +93,7 @@ def create_llm():
     """
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-2.5-flash",
         google_api_key=GOOGLE_API_KEY,
         temperature=0.3
     )

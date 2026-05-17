@@ -3,91 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-        <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f0f0f0;
-        margin: 20px;
+    <title>WebRAG — Website RAG Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root{
+        --bg: #f5f7fb;
+        --card: #ffffff;
+        --muted: #6b7280;
+        --accent: #0f62fe;
+        --accent-700: #0b4fd6;
+        --glass: rgba(255,255,255,0.6);
       }
 
-      h1 {
-        color: #333;
+      *{box-sizing:border-box}
+      html,body{height:100%}
+      body{
+        margin:0;
+        font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+        background:linear-gradient(180deg,var(--bg),#eef2f7);
+        color:#0f172a;
+        -webkit-font-smoothing:antialiased;
       }
 
-      table {
-        border-collapse: collapse;
-        width: 80%;
-        background: white;
-      }
+      .site-header{max-width:1100px;margin:0 auto;padding:20px 24px;display:flex;align-items:center;justify-content:space-between}
+      .brand{display:flex;align-items:center;gap:12px}
+      .brand .logo{font-size:28px}
+      .brand .name{font-weight:700;font-size:18px}
+      .nav{display:flex;gap:12px;align-items:center}
+      .nav a{color:var(--muted);text-decoration:none;font-size:14px}
 
-      th,
-      td {
-        border: 1px solid black;
-        padding: 8px 12px;
-        text-align: center;
-      }
+      .container{max-width:1100px;margin:28px auto;padding:0 24px}
 
-      th {
-        background-color: #ddd;
-      }
-      .adult {
-        background-color: rgb(94, 190, 94);
-      }
-      .minor {
-        background-color: rgba(221, 39, 39, 0.823);
-      }
-      header p {
-        color: var(--muted);
-        font-size: 15px;
-        max-width: 500px;
-     }
-      .url-row {
-        margin-bottom: 20px;
-      }
-      .url-input {
-        width: 100%;
-        padding: 10px;
-        margin: 5px 0;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      }
-      .btn {
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      .btn:hover {
-        background-color: #0056b3;
-      }
-      .answer, .error {
-        margin-top: 20px;
-        padding: 15px;
-        border-radius: 4px;
-      }
-      .answer {
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
-        color: #155724;
-      }
-      .error {
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
-      }
+      footer{max-width:1100px;margin:28px auto;padding:18px 24px;color:var(--muted);font-size:13px}
+
+      @media(max-width:600px){.site-header{padding:14px}.container{padding:0 16px}}
     </style>
 </head>
 <body>
-    <header>
-      <div class="logo">
-        <div class="logo-icon">🧠</div>
-        <div class="logo-text">WebRAG</div>
-      </div>
-      <p>Submit any website URL and get AI-powered insights. Ask questions, extract information, and understand any site instantly.</p>
-    </header>
+  <header class="site-header">
+    <div class="brand">
+      <div class="logo">🧠</div>
+      <div class="name">WebRAG</div>
+    </div>
+    <nav class="nav" aria-label="Main navigation">
+      <a href="#">Home</a>
+      <a href="#">Docs</a>
+      <a href="#">About</a>
+    </nav>
+  </header>
+
+  <main class="container">
     {% block start %}{% endblock %}
+  </main>
+
+  <footer>
+    Built with care — WebRAG · Local development server
+  </footer>
 </body>
 </html>

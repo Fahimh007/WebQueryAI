@@ -1,100 +1,86 @@
 {% extends "base.html" %}
 
 {% block start %}
+<div class="layout-grid">
+    <div class="panel panel-left">
+        <section class="card form-card">
+            <h1 class="h1">Website RAG Assistant</h1>
+            <p class="muted">Paste a website URL and ask a question. Results and sources appear to the right on wide screens.</p>
 
-<div class="container">
+            <form method="POST" class="form">
+                {% csrf_token %}
 
-    <h1>🌐 Website RAG Assistant</h1>
+                <label class="label" for="urlInput">Website URL</label>
+                <input type="url" id="urlInput" name="urlInput" class="input" placeholder="https://example.com" value="{{ url|default:'' }}" required />
 
-    <form method="POST">
+                <label class="label" for="userQuery">Your Question</label>
+                <input type="text" id="userQuery" name="userQuery" class="input" placeholder="Ask a question about the website..." value="{{ query|default:'' }}" required />
 
-        {% csrf_token %}
+                <div class="form-foot">
+                    <button type="submit" class="btn primary">Get Answer</button>
+                </div>
+            </form>
 
-        <div class="url-row">
+            {% if error %}
+                <div class="alert alert-error"><strong>Error</strong><div class="alert-body">{{ error }}</div></div>
+            {% endif %}
 
-            <label for="urlInput">
-                > Website URL:
-            </label>
+            <div class="help muted">Tip: For best results, use publicly accessible pages and allow a few seconds for processing.</div>
+        </section>
+    </div>
 
-            <input
-                type="url"
-                class="url-input"
-                id="urlInput"
-                name="urlInput"
-                placeholder="https://example.com"
-                value="{{ url|default:'' }}"
-                required
-            />
+    <div class="panel panel-right">
+        {% if answer %}
+            <section class="card result-card">
+                <h2>Answer</h2>
+                <p class="answer-text">{{ answer }}</p>
+            </section>
+        {% else %}
+            <section class="card placeholder">
+                <h3>Results</h3>
+                <p class="muted">Answers will appear here once you submit a URL and a question.</p>
+            </section>
+        {% endif %}
 
-            <br><br>
-
-            <label for="userQuery">
-                > Your Question:
-            </label>
-
-            <input
-                type="text"
-                class="url-input"
-                id="userQuery"
-                name="userQuery"
-                placeholder="Ask a question about the website..."
-                value="{{ query|default:'' }}"
-                required
-            />
-
-            <br><br>
-
-            <button
-                type="submit"
-                class="btn btn-primary"
-                id="indexBtn"
-            >
-                ⚡ Get Answer
-            </button>
-
-        </div>
-
-    </form>
-
-
-    {% if answer %}
-        <div class="answer">
-
-            <h2>Answer:</h2>
-
-            <p>{{ answer }}</p>
-
-        </div>
-    {% endif %}
-
-
-    {% if sources %}
-        <div class="sources">
-
-            <h3>Sources:</h3>
-
-            <ul>
-                {% for source in sources %}
-                    <li>
-                        {{ source.page_content|truncatechars:250 }}
-                    </li>
-                {% endfor %}
-            </ul>
-
-        </div>
-    {% endif %}
-
-
-    {% if error %}
-        <div class="error">
-
-            <h2>Error:</h2>
-
-            <p>{{ error }}</p>
-
-        </div>
-    {% endif %}
-
+        {% if sources %}
+            <section class="card sources-card">
+                <h3>Sources</h3>
+                <ul class="source-list">
+                    {% for source in sources %}
+                        <li class="source-item">{{ source.page_content|truncatechars:500 }}</li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    </div>
 </div>
+
+<style>
+    .layout-grid{display:grid;grid-template-columns:1fr;gap:18px;align-items:start}
+    .card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 8px 24px rgba(15,23,42,0.06)}
+    .h1{margin:0 0 8px;font-size:20px}
+    .muted{color:#6b7280;font-size:14px}
+    .label{display:block;font-size:13px;color:#374151;margin-top:12px;margin-bottom:6px}
+    .input{width:100%;padding:12px;border:1px solid #e6e8eb;border-radius:8px}
+    .form-foot{display:flex;justify-content:flex-end;margin-top:14px}
+    .btn{padding:10px 14px;border-radius:8px;border:none;cursor:pointer}
+    .btn.primary{background:#0f62fe;color:#fff;font-weight:600}
+    .btn.primary:hover{background:#0b4fd6}
+
+    .alert{margin-top:14px;padding:12px;border-radius:8px}
+    .alert-error{background:#fff4f4;border:1px solid #ffd6d6;color:#7f1d1d}
+    .alert-body{margin-top:6px}
+
+    .result-card h2{margin-top:0}
+    .answer-text{white-space:pre-wrap;color:#0f172a}
+
+    .source-list{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+    .source-item{padding:12px;border-radius:8px;background:#fbfdff;border:1px solid #eef2ff;color:#475569}
+
+    @media(min-width:960px){
+        .layout-grid{grid-template-columns:420px 1fr}
+        .panel-left{position:sticky;top:24px;height:max-content}
+    }
+</style>
 
 {% endblock %}
