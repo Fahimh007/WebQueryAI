@@ -102,7 +102,6 @@ def ask_website(url, question):
     result = qa_chain.invoke({
         "query": question
     })
-
     return {
         "answer": result["result"],
         "sources": result["source_documents"]
