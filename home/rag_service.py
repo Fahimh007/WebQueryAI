@@ -13,10 +13,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 if not GOOGLE_API_KEY:
     raise ValueError("GOOGLE_API_KEY not found in .env file")
 
-# EMBEDDING MODEL
-embedding_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+
 
 # LOAD WEBSITE DATA
 def load_website(url):
@@ -38,6 +35,11 @@ def split_documents(documents):
     )
     chunks = splitter.split_documents(documents)
     return chunks
+
+# EMBEDDING MODEL
+embedding_model = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
 # CREATE VECTOR STORE
 def create_vector_store(chunks):
